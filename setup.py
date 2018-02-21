@@ -23,13 +23,16 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
     build_cmd = []
     if is_win:
         python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
+        # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"
         build_cmd.append(vcvarsall_cmd)
+        # could not get it to work with the version of ninja that is on pypi, so just resort to nmake for now
         generator = "NMake Makefiles"
         install_cmd = "nmake install"
-    
-    if not os.path.isfile(python_library):
-        raise ValueError("Could not find python_library. Please extend the code to detect it for your particular system/environment.")
+    elif is_darwin:
+        raise NotImplementedError("please define `python_library` for macOS")
+    else:
+        raise NotImplementedError("please define `python_library` for linux")
 
     build_cmd.append(" ".join([
     f"cmake {src} -G \"{generator}\"",
