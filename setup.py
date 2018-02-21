@@ -33,6 +33,11 @@ def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
         with zipfile.ZipFile(zip_file, 'r') as zh:
             zh.extractall(scripts_dir)
 
+        current = subprocess.check_output("ninja --version", shell=True).decode().strip()
+        if version != current:
+            exit(f"> overwriting ninja FAILED")
+        print(f"> overwriting ninja succeeded")
+
 
 def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generator="Ninja", install_cmd="ninja install"):
     """Build and install VTK using CMake."""
@@ -52,19 +57,19 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
     build_cmd.append(" ".join([
     f"cmake {src} -G \"{generator}\"",
         "-DCMAKE_BUILD_TYPE=Release",
-        # install options
+        # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        # build options
+        # BUILD options
         "-DBUILD_DOCUMENTATION:BOOL=OFF",
         "-DBUILD_TESTING:BOOL=OFF",
         "-DBUILD_EXAMPLES:BOOL=OFF",
         "-DBUILD_SHARED_LIBS:BOOL=ON",
-        # python options
-        #"-DVTK_PYTHON_VERSION:STRING=3.6",
-        f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
+        # PythonLibs options https://cmake.org/cmake/help/latest/module/FindPythonLibs.html
         f"-DPYTHON_INCLUDE_DIR:PATH=\"{sys.prefix}/include\"",
         f"-DPYTHON_LIBRARY:FILEPATH=\"{python_library}\"",
-        # wrapping options
+        # PythonInterp options https://cmake.org/cmake/help/latest/module/FindPythonInterp.html
+        f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
+        # VTK options
         "-DVTK_ENABLE_VTKPYTHON:BOOL=OFF",
         "-DVTK_WRAP_PYTHON:BOOL=ON",
     ]))
