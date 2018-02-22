@@ -39,7 +39,12 @@ def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
         print(f"> overwriting ninja succeeded")
 
 
-def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generator="Ninja", install_cmd="ninja install"):
+def build_vtk(src="../../src/vtk",
+              work="work/vtk",
+              build="../../build",
+              generator="Ninja",
+              install_cmd="ninja install",
+              install_dev=True):
     """Build and install VTK using CMake."""
     build_cmd = []
     if is_win:
@@ -62,7 +67,14 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
+        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING={build}",
+        f"-DVTK_INSTALL_RUNTIME_DIR:PATH={build}",
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH={build}",
+        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH={build}",
+        f"-DVTK_INSTALL_INCLUDE_DIR:PATH={build}",
+        f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
         # BUILD options
+        "-DVTK_LEGACY_REMOVE:BOOL=ON",
         "-DBUILD_DOCUMENTATION:BOOL=OFF",
         "-DBUILD_TESTING:BOOL=OFF",
         "-DBUILD_EXAMPLES:BOOL=OFF",
@@ -72,9 +84,10 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
         f"-DPYTHON_LIBRARY:FILEPATH=\"{python_library}\"",
         # PythonInterp options https://cmake.org/cmake/help/latest/module/FindPythonInterp.html
         f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
-        # VTK options
+        # Wrapping options
         "-DVTK_ENABLE_VTKPYTHON:BOOL=OFF",
         "-DVTK_WRAP_PYTHON:BOOL=ON",
+        "-DVTK_WRAP_TCL:BOOL=OFF",
     ]))
     os.makedirs(work, exist_ok=True)
 
