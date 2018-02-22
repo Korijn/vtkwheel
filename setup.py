@@ -53,8 +53,9 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
     elif is_darwin:
         raise NotImplementedError("please define `python_library` for macOS")
     else:
-        python_include_dir = f"{sys.prefix}/include/python{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_library = f"/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0"
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_include_dir = f"{sys.prefix}/include/python{version_string}"
+        python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
 
     build_cmd.append(" ".join([
     f"cmake {src} -G \"{generator}\"",
