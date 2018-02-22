@@ -43,6 +43,7 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
     """Build and install VTK using CMake."""
     build_cmd = []
     if is_win:
+        python_include_dir = f"{sys.prefix}/include"
         python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
         # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"
@@ -52,7 +53,8 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
     elif is_darwin:
         raise NotImplementedError("please define `python_library` for macOS")
     else:
-        raise NotImplementedError("please define `python_library` for linux")
+        python_include_dir = f"{sys.prefix}/include/python{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_library = f"/usr/lib/x86_64-linux-gnu/libpython3.6m.so.1.0"
 
     build_cmd.append(" ".join([
     f"cmake {src} -G \"{generator}\"",
@@ -65,7 +67,7 @@ def build_vtk(src="../../src/vtk", work="work/vtk", build="../../build", generat
         "-DBUILD_EXAMPLES:BOOL=OFF",
         "-DBUILD_SHARED_LIBS:BOOL=ON",
         # PythonLibs options https://cmake.org/cmake/help/latest/module/FindPythonLibs.html
-        f"-DPYTHON_INCLUDE_DIR:PATH=\"{sys.prefix}/include\"",
+        f"-DPYTHON_INCLUDE_DIR:PATH=\"{python_include_dir}\"",
         f"-DPYTHON_LIBRARY:FILEPATH=\"{python_library}\"",
         # PythonInterp options https://cmake.org/cmake/help/latest/module/FindPythonInterp.html
         f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
