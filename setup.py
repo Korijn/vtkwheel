@@ -44,7 +44,8 @@ def build_vtk(src="../../src/vtk",
               build="../../build",
               generator="Ninja",
               install_cmd="ninja install",
-              install_dev=True):
+              install_dev=True,
+              clean_cmake_cache=True):
     """Build and install VTK using CMake."""
     build_cmd = []
     if is_win:
@@ -62,16 +63,19 @@ def build_vtk(src="../../src/vtk",
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
         python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
 
+    clean_cmake_cache_cmd = ""
+    if clean_cmake_cache:
+        clean_cmake_cache = "-U *"
     build_cmd.append(" ".join([
-    f"cmake {src} -G \"{generator}\"",
+    f"cmake {clean_cmake_cache} {src} -G \"{generator}\"",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
         f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING={build}",
-        f"-DVTK_INSTALL_RUNTIME_DIR:PATH={build}",
-        f"-DVTK_INSTALL_LIBRARY_DIR:PATH={build}",
-        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH={build}",
-        f"-DVTK_INSTALL_INCLUDE_DIR:PATH={build}",
+        f"-DVTK_INSTALL_RUNTIME_DIR:PATH=.",
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=.",
+        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=.",
+        f"-DVTK_INSTALL_INCLUDE_DIR:PATH=.",
         f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
         # BUILD options
         "-DVTK_LEGACY_REMOVE:BOOL=ON",
@@ -106,3 +110,4 @@ def build_vtk(src="../../src/vtk",
 if __name__ == "__main__":
     clone_vtk()
     build_vtk()
+    build_vtk(build="../../build-release", install_dev=False)
