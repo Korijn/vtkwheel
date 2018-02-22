@@ -57,7 +57,9 @@ def build_vtk(src="../../src/vtk",
         # could not get it to work with the version of ninja that is on pypi, so put it on the current path
         download_install_ninja_win()
     elif is_darwin:
-        raise NotImplementedError("please define `python_library` for macOS")
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_include_dir = f"{sys.prefix}/include/python{version_string}"
+        python_library = f"{sys.prefix}/lib/libpython{sys.version_info[0]}.{sys.version_info[1]}.dylib"
     else:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
