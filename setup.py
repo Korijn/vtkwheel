@@ -71,7 +71,7 @@ def build_vtk(src="../../src/vtk",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING={build}",
+        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",
         f"-DVTK_INSTALL_RUNTIME_DIR:PATH=.",
         f"-DVTK_INSTALL_LIBRARY_DIR:PATH=.",
         f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=.",
