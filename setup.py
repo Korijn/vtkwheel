@@ -15,7 +15,7 @@ def clone_vtk(branch="v8.1.0", dir="src/vtk"):
     print(f"> cloning VTK {branch}")
     clone_cmd = f"git clone --depth 1 -b {branch} https://gitlab.kitware.com/vtk/vtk.git {dir}"
     print(f"> {clone_cmd}")
-    subprocess.check_call(f"git clone --depth 1 -b {branch} https://gitlab.kitware.com/vtk/vtk.git {dir}", shell=True)
+    subprocess.check_call(clone_cmd, shell=True)
 
 
 def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
