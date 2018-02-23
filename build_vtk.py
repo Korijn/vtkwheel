@@ -105,7 +105,7 @@ def build_vtk(src="../../src/vtk",
         ])
     elif not is_win:
         cmake_cmd.extend([
-            "-DCMAKE_INSTALL_RPATH:STRING=$ORIGIN",
+            "-DCMAKE_INSTALL_RPATH:STRING=\$ORIGIN",
         ])
 
     build_cmd.append(" ".join(cmake_cmd))
