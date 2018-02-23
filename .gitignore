@@ -2,3 +2,4 @@ src
 .vscode
 work
 build*
+dist

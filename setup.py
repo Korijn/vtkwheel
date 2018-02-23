@@ -1,115 +1,62 @@
-import subprocess
-import os
+from collections import defaultdict
+from distutils.command.build import build as BuildCommand
+from os.path import isfile, relpath, dirname
+from os import unlink
+from shutil import rmtree, copytree
 from setuptools import setup
-import sys
+from setuptools.dist import Distribution
+from glob import iglob
 
 
-is_win = (sys.platform == 'win32')
-is_darwin = (sys.platform == 'darwin')
+def get_data_files(build_dir="build_vtk", site_package_dir="vtk", bin_dir="bin", include_dir="include"):
+    """
+    data_files is a sequence of (directory, files) pairs.
+
+    Each (directory, files) pair in the sequence specifies the installation directory 
+    and the files to install there. If directory is a relative path, it is interpreted 
+    relative to the installation prefix (Python’s sys.prefix for pure-Python packages, 
+    sys.exec_prefix for packages that contain extension modules). Each file name in 
+    files is interpreted relative to the setup.py script at the top of the package 
+    source distribution. No directory information from files is used to determine 
+    the final location of the installed file; only the name of the file is used.
+    """
+    isfile_filter = lambda path: isfile(path)
+    # executables
+    bin_files = list(filter(isfile_filter, iglob(f"{build_dir}/{bin_dir}/**/*", recursive=True)))
+    # headers
+    include_files = list(filter(isfile_filter, iglob(f"{build_dir}/{include_dir}/**/*", recursive=True)))
+
+    # construct data_files datastructure
+    data_files = defaultdict(list)
+    for filename in bin_files + include_files:
+        target_dir = relpath(dirname(filename), build_dir)
+        data_files[target_dir].append(filename)
+
+    # convert defaultdict to plain list of tuples of lists
+    # >>> a = {}
+    # >>> a['foo'] = [1, 2, 3]
+    # >>> a['bar'] = [7, 2]
+    # >>> a.items()
+    # dict_items([('foo', [1, 2, 3]), ('bar', [7, 2])])
+    # >>> list(a.items())
+    # [('foo', [1, 2, 3]), ('bar', [7, 2])]
+    return list(data_files.items())
 
 
-def clone_vtk(branch="v8.1.0", dir="src/vtk"):
-    """Shallow-clone of VTK gitlab repo of tip of `branch` to `dir`."""
-    if os.path.exists(dir):
-        return
-    print(f"> cloning VTK {branch}")
-    clone_cmd = f"git clone --depth 1 -b {branch} https://gitlab.kitware.com/vtk/vtk.git {dir}"
-    print(f"> {clone_cmd}")
-    subprocess.check_call(clone_cmd, shell=True)
+class BinaryDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
 
 
-def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
-    if not os.path.isfile(zip_file):
-        print(f"> downloading ninja v{version}")
-        from urllib.request import urlretrieve
-        url = f"https://github.com/ninja-build/ninja/releases/download/v{version}/ninja-win.zip"
-        urlretrieve(url, zip_file)
-
-    current = subprocess.check_output("ninja --version", shell=True).decode().strip()
-    if version != current:
-        print(f"> overwriting ninja (v{current}) with v{version}")
-        scripts_dir = os.path.join(sys.prefix, "Scripts")
-        import zipfile
-        with zipfile.ZipFile(zip_file, 'r') as zh:
-            zh.extractall(scripts_dir)
-
-        current = subprocess.check_output("ninja --version", shell=True).decode().strip()
-        if version != current:
-            exit(f"> overwriting ninja FAILED")
-        print(f"> overwriting ninja succeeded")
-
-
-def build_vtk(src="../../src/vtk",
-              work="work/vtk",
-              build="../../build",
-              generator="Ninja",
-              install_cmd="ninja install",
-              install_dev=True,
-              clean_cmake_cache=True):
-    """Build and install VTK using CMake."""
-    build_cmd = []
-    if is_win:
-        python_include_dir = f"{sys.prefix}/include"
-        python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
-        # only support VS2017 build tools for now
-        vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"
-        build_cmd.append(vcvarsall_cmd)
-        # could not get it to work with the version of ninja that is on pypi, so put it on the current path
-        download_install_ninja_win()
-    elif is_darwin:
-        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        python_library = f"{sys.prefix}/lib/libpython{sys.version_info[0]}.{sys.version_info[1]}.dylib"
-    else:
-        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
-
-    clean_cmake_cache_cmd = ""
-    if clean_cmake_cache:
-        clean_cmake_cache = "-U *"
-    build_cmd.append(" ".join([
-    f"cmake {clean_cmake_cache} {src} -G \"{generator}\"",
-        "-DCMAKE_BUILD_TYPE=Release",
-        # INSTALL options
-        f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",
-        f"-DVTK_INSTALL_RUNTIME_DIR:PATH=.",
-        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=.",
-        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=.",
-        f"-DVTK_INSTALL_INCLUDE_DIR:PATH=.",
-        f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
-        # BUILD options
-        "-DVTK_LEGACY_REMOVE:BOOL=ON",
-        "-DBUILD_DOCUMENTATION:BOOL=OFF",
-        "-DBUILD_TESTING:BOOL=OFF",
-        "-DBUILD_EXAMPLES:BOOL=OFF",
-        "-DBUILD_SHARED_LIBS:BOOL=ON",
-        # PythonLibs options https://cmake.org/cmake/help/latest/module/FindPythonLibs.html
-        f"-DPYTHON_INCLUDE_DIR:PATH=\"{python_include_dir}\"",
-        f"-DPYTHON_LIBRARY:FILEPATH=\"{python_library}\"",
-        # PythonInterp options https://cmake.org/cmake/help/latest/module/FindPythonInterp.html
-        f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
-        # Wrapping options
-        "-DVTK_ENABLE_VTKPYTHON:BOOL=OFF",
-        "-DVTK_WRAP_PYTHON:BOOL=ON",
-        "-DVTK_WRAP_TCL:BOOL=OFF",
-    ]))
-    os.makedirs(work, exist_ok=True)
-
-    build_cmd.append(install_cmd)
-
-    build_cmd = " && ".join(build_cmd)
-    print(f"> configuring, building and installing VTK")
-    print(f"> {build_cmd}")
-    subprocess.check_call(build_cmd, shell=True, cwd=work)
-
-
-# setup(
-
-# )
-
-if __name__ == "__main__":
-    clone_vtk()
-    build_vtk()
-    build_vtk(build="../../build-release", install_dev=False)
+setup(
+    name='VTK',
+    version='8.1.0',
+    description='VTK is an open-source toolkit for 3D computer graphics, image processing, and visualization',
+    author='VTK Community',
+    url='https://www.vtk.org',
+    package_dir={'': 'build_vtk'},
+    packages=['vtk'],
+    include_package_data=True,
+    data_files=get_data_files(),
+    distclass=BinaryDistribution,
+)
