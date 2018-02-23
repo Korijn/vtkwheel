@@ -63,11 +63,13 @@ def build_vtk(src="../../src/vtk",
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
         python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
 
-    clean_cmake_cache_cmd = ""
+    # compose cmake command
+    cmake_cmd = ["cmake"]
     if clean_cmake_cache and os.path.exists(work):
-        clean_cmake_cache_cmd = "-U *"
-    build_cmd.append(" ".join([
-    f"cmake {clean_cmake_cache_cmd} {src} -G \"{generator}\"",
+        cmake_cmd.append("-U *")
+    cmake_cmd.extend([
+        src,
+        f"-G \"{generator}\"",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
@@ -92,14 +94,28 @@ def build_vtk(src="../../src/vtk",
         "-DVTK_ENABLE_VTKPYTHON:BOOL=OFF",
         "-DVTK_WRAP_PYTHON:BOOL=ON",
         "-DVTK_WRAP_TCL:BOOL=OFF",
-    ]))
-    os.makedirs(work, exist_ok=True)
+    ])
+    # rpath settings
+    # https://github.com/jcfr/VTKPythonPackage/blob/b30ce84696a3ea0bcf42052646a28bdf854ac819/CMakeLists.txt#L175
+    # https://cmake.org/Wiki/CMake_RPATH_handling
+    if is_darwin:
+        cmake_cmd.extend([
+            "-DCMAKE_INSTALL_NAME_DIR:STRING=@loader_path",
+            "-DCMAKE_INSTALL_RPATH:STRING=@loader_path",
+        ])
+    elif not is_win:
+        cmake_cmd.extend([
+            "-DCMAKE_INSTALL_RPATH:STRING=$ORIGIN",
+        ])
 
+    build_cmd.append(" ".join(cmake_cmd))
     build_cmd.append(install_cmd)
 
     build_cmd = " && ".join(build_cmd)
     print(f"> configuring, building and installing VTK")
     print(f"> {build_cmd}")
+
+    os.makedirs(work, exist_ok=True)
     subprocess.check_call(build_cmd, shell=True, cwd=work)
 
 
