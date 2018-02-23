@@ -1,14 +1,31 @@
 from collections import defaultdict
 from distutils.command.build import build as BuildCommand
-from os.path import isfile, relpath, dirname
+from os.path import isfile, relpath, dirname, splitext
 from os import unlink
 from shutil import rmtree, copytree
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.dist import Distribution
 from glob import iglob
 
 
-def get_data_files(build_dir="build_vtk", site_package_dir="vtk", bin_dir="bin", include_dir="include"):
+def get_package_data(build_dir="build_vtk", package_dir="vtk"):
+    """
+    The package_data argument is a dictionary that maps from package names to lists of glob patterns
+    """
+    isfile_filter = lambda path: isfile(path)
+    notpyfile_filter = lambda path: splitext(path)[-1] not in {'.py', '.pyc'}
+    # non-python files
+    package_files = list(filter(notpyfile_filter, filter(isfile_filter, iglob(f"{build_dir}/{package_dir}/**/*", recursive=True))))
+
+    file_list = []
+    for filename in package_files:
+        rel_filename = relpath(filename, f"{build_dir}/{package_dir}")
+        file_list.append(rel_filename)
+
+    return {package_dir: file_list}
+
+
+def get_data_files(build_dir="build_vtk", bin_dir="bin", include_dir="include"):
     """
     data_files is a sequence of (directory, files) pairs.
 
@@ -55,7 +72,8 @@ setup(
     author='VTK Community',
     url='https://www.vtk.org',
     package_dir={'': 'build_vtk'},
-    packages=['vtk'],
+    package_data=get_package_data(),
+    packages=find_packages('build_vtk'),
     include_package_data=True,
     data_files=get_data_files(),
     distclass=BinaryDistribution,

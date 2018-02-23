@@ -3,3 +3,4 @@ src
 work
 build*
 dist
+__pycache__
