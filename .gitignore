@@ -1,6 +1,7 @@
-src
+src/*
 .vscode
-work
-build*
-dist
-__pycache__
+work/*
+build/*
+build_vtk/*
+dist/*
+__pycache__/*

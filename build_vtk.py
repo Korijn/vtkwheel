@@ -1,0 +1,112 @@
+import subprocess
+import os
+from setuptools import setup
+import sys
+
+
+is_win = (sys.platform == 'win32')
+is_darwin = (sys.platform == 'darwin')
+
+
+def clone_vtk(branch="v8.1.0", dir="src/vtk"):
+    """Shallow-clone of VTK gitlab repo of tip of `branch` to `dir`."""
+    if os.path.exists(dir):
+        return
+    print(f"> cloning VTK {branch}")
+    clone_cmd = f"git clone --depth 1 -b {branch} https://gitlab.kitware.com/vtk/vtk.git {dir}"
+    print(f"> {clone_cmd}")
+    subprocess.check_call(clone_cmd, shell=True)
+
+
+def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
+    if not os.path.isfile(zip_file):
+        print(f"> downloading ninja v{version}")
+        from urllib.request import urlretrieve
+        url = f"https://github.com/ninja-build/ninja/releases/download/v{version}/ninja-win.zip"
+        urlretrieve(url, zip_file)
+
+    current = subprocess.check_output("ninja --version", shell=True).decode().strip()
+    if version != current:
+        print(f"> overwriting ninja (v{current}) with v{version}")
+        scripts_dir = os.path.join(sys.prefix, "Scripts")
+        import zipfile
+        with zipfile.ZipFile(zip_file, 'r') as zh:
+            zh.extractall(scripts_dir)
+
+        current = subprocess.check_output("ninja --version", shell=True).decode().strip()
+        if version != current:
+            exit(f"> overwriting ninja FAILED")
+        print(f"> overwriting ninja succeeded")
+
+
+def build_vtk(src="../../src/vtk",
+              work="work/vtk",
+              build="../../build_vtk",
+              generator="Ninja",
+              install_cmd="ninja install",
+              install_dev=True,
+              clean_cmake_cache=True):
+    """Build and install VTK using CMake."""
+    build_cmd = []
+    if is_win:
+        python_include_dir = f"{sys.prefix}/include"
+        python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
+        # only support VS2017 build tools for now
+        vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"
+        build_cmd.append(vcvarsall_cmd)
+    elif is_darwin:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_include_dir = f"{sys.prefix}/include/python{version_string}"
+        python_library = f"{sys.prefix}/lib/libpython{sys.version_info[0]}.{sys.version_info[1]}.dylib"
+    else:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_include_dir = f"{sys.prefix}/include/python{version_string}"
+        python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
+
+    clean_cmake_cache_cmd = ""
+    if clean_cmake_cache and os.path.exists(work):
+        clean_cmake_cache_cmd = "-U *"
+    build_cmd.append(" ".join([
+    f"cmake {clean_cmake_cache_cmd} {src} -G \"{generator}\"",
+        "-DCMAKE_BUILD_TYPE=Release",
+        # INSTALL options
+        f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
+        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",  # VTK will automatically create a subdir "vtk"
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./vtk",  # so that's where we'll install our .so files
+        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./vtk",
+        f"-DVTK_INSTALL_RUNTIME_DIR:PATH=./bin",
+        f"-DVTK_INSTALL_INCLUDE_DIR:PATH=./include",
+        f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
+        # BUILD options
+        "-DVTK_LEGACY_REMOVE:BOOL=ON",
+        "-DBUILD_DOCUMENTATION:BOOL=OFF",
+        "-DBUILD_TESTING:BOOL=OFF",
+        "-DBUILD_EXAMPLES:BOOL=OFF",
+        "-DBUILD_SHARED_LIBS:BOOL=ON",
+        # PythonLibs options https://cmake.org/cmake/help/latest/module/FindPythonLibs.html
+        f"-DPYTHON_INCLUDE_DIR:PATH=\"{python_include_dir}\"",
+        f"-DPYTHON_LIBRARY:FILEPATH=\"{python_library}\"",
+        # PythonInterp options https://cmake.org/cmake/help/latest/module/FindPythonInterp.html
+        f"-DPYTHON_EXECUTABLE:FILEPATH=\"{sys.executable}\"",
+        # Wrapping options
+        "-DVTK_ENABLE_VTKPYTHON:BOOL=OFF",
+        "-DVTK_WRAP_PYTHON:BOOL=ON",
+        "-DVTK_WRAP_TCL:BOOL=OFF",
+    ]))
+    os.makedirs(work, exist_ok=True)
+
+    build_cmd.append(install_cmd)
+
+    build_cmd = " && ".join(build_cmd)
+    print(f"> configuring, building and installing VTK")
+    print(f"> {build_cmd}")
+    subprocess.check_call(build_cmd, shell=True, cwd=work)
+
+
+if __name__ == "__main__":
+    if is_win:
+        # could not get it to work with the version of ninja that is on pypi, so put it on the current path
+        download_install_ninja_win()
+
+    clone_vtk()
+    build_vtk()
