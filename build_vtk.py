@@ -58,7 +58,8 @@ def build_vtk(src="../../src/vtk",
     elif is_darwin:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        python_library = f"{sys.prefix}/lib/libpython{sys.version_info[0]}.{sys.version_info[1]}.dylib"
+        # python3 version installed with brew
+        python_library = f"/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6/lib/libpython3.6.dylib"
     else:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
