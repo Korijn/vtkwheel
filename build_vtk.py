@@ -12,6 +12,7 @@ def clone_vtk(branch="v8.1.0", dir="src/vtk"):
     """Shallow-clone of VTK gitlab repo of tip of `branch` to `dir`."""
     if os.path.exists(dir):
         return
+    os.makedirs(os.path.dirname(dir), exist_ok=True)
     print(f"> cloning VTK {branch}")
     clone_cmd = f"git clone --depth 1 -b {branch} https://gitlab.kitware.com/vtk/vtk.git {dir}"
     print(f"> {clone_cmd}")
@@ -19,6 +20,7 @@ def clone_vtk(branch="v8.1.0", dir="src/vtk"):
 
 
 def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
+    os.makedirs(os.path.dirname(zip_file), exist_ok=True)
     if not os.path.isfile(zip_file):
         print(f"> downloading ninja v{version}")
         from urllib.request import urlretrieve
