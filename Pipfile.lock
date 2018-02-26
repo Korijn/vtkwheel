@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a51f7a07a569689d8b215c39e432b1118c4cedf02aeb7ea592b7218284e118b1"
+            "sha256": "cadd0e243ec96f98a9e5210f1c28314cd29db2a6651fb58f4992fffb8ea9cd35"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -28,6 +28,13 @@
     },
     "default": {},
     "develop": {
+        "auditwheel": {
+            "hashes": [
+                "sha256:63468bf62d82b27b1635ffe1c3f1c4e54ef67d0a6d38bedccc38ce6965d56db7",
+                "sha256:829ec26097f6ca9a239ebfb4d3c6dc093742141423268cb7ba1d8b15fb0c20a2"
+            ],
+            "version": "==1.8.0"
+        },
         "cmake": {
             "hashes": [
                 "sha256:9e7286ef411d9e771cd122f53e2b8b690d7f074b8d72a62ecd345e2d26dd70fa",
@@ -93,6 +100,20 @@
                 "sha256:44ca51391b098078ef980d1b9c4213bff32eace184155f541c2c3dced6c8656e"
             ],
             "version": "==1.7.2.post2"
+        },
+        "pyelftools": {
+            "hashes": [
+                "sha256:e9dd97d685a5b96b88a988dabadb88e5a539b64cd7d7927fac9a7368dc4c459c"
+            ],
+            "version": "==0.24"
+        },
+        "typing": {
+            "hashes": [
+                "sha256:b2c689d54e1144bbcfd191b0832980a21c2dbcf7b5ff7a66248a60c90e951eb8",
+                "sha256:3a887b021a77b292e151afb75323dea88a7bc1b3dfa92176cff8e44c8b68bddf",
+                "sha256:d400a9344254803a2368533e4533a4200d21eb7b6b729c173bc38201a74db3f2"
+            ],
+            "version": "==3.6.4"
         },
         "wheel": {
             "hashes": [
