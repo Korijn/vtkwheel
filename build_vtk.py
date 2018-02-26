@@ -64,6 +64,15 @@ def build_vtk(src="../../src/vtk",
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
         python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
 
+    # being helpful
+    validation_errors = []
+    if not os.path.exists(python_library):
+        validation_errors.append(f"!! python_library does not exist at: '{python_library}'")
+    if not os.path.exists(python_include_dir):
+        validation_errors.append(f"!! python_include_dir does not exist at: '{python_include_dir}'")
+    if validation_errors:
+        raise ValueError("\n".join(validation_errors))
+
     # compose cmake command
     cmake_cmd = ["cmake"]
     if clean_cmake_cache and os.path.exists(work):
