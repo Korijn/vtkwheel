@@ -23,6 +23,18 @@ class BinaryDistribution(Distribution):
         return True
 
 
+    def __getattribute__(self, name):
+        if name == "ext_modules":
+            is_finalize_options_call = [frame for frame in inspect.stack()
+                                        if frame.filename.endswith('install.py') and frame.function == 'finalize_options']
+            if is_finalize_options_call:
+                # this distutils function checks the self.ext_modules attribute directly for truthiness, instead
+                # of calling self.has_ext_modules()
+                return [True]  # any truthy list will do
+
+        return super().__getattribute__(name)
+
+
 def get_package_dir(package, package_dir=None):
     """
     Return the directory, relative to the top of the source distribution, where package 'package' should be found
