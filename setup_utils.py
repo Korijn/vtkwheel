@@ -1,10 +1,6 @@
 from itertools import chain
 from collections import defaultdict
-from distutils.command.build import build as BuildCommand
-from os.path import isfile, relpath, dirname, splitext
-from os import unlink
-from shutil import rmtree, copytree
-from setuptools import setup, find_packages
+from os.path import isfile, relpath, dirname, splitext, join
 from setuptools.dist import Distribution
 from glob import iglob
 
@@ -13,8 +9,8 @@ class BinaryDistribution(Distribution):
     """
     Specialized setuptools `Distribution` class that forces a platform-specific package build.
 
-    In the scenario that you are not providing any Extensions to the ext_modules keyword argument of `setup()`, but 
-    would still like to build a platform-specific wheel, you can provide this class to the `distclass` keyword 
+    In the scenario that you are not providing any Extensions to the ext_modules keyword argument of `setup()`, but
+    would still like to build a platform-specific wheel, you can provide this class to the `distclass` keyword
     argument of `setup()`. Setuptools will then recognize your distribution as containing Extensions and build a
     platform-specific wheel.
 
@@ -27,7 +23,7 @@ class BinaryDistribution(Distribution):
         return True
 
 
-def get_package_dir(self, package, package_dir=None):
+def get_package_dir(package, package_dir=None):
     """
     Return the directory, relative to the top of the source distribution, where package 'package' should be found
     (at least according to the 'package_dir' option, if any).
@@ -38,12 +34,12 @@ def get_package_dir(self, package, package_dir=None):
     """
     if package_dir is None:
         package_dir = {}
-    
+
     path = package.split('.')
 
     if not package_dir:
         if path:
-            return os.path.join(*path)
+            return join(*path)
         else:
             return ''
     else:
@@ -56,7 +52,7 @@ def get_package_dir(self, package, package_dir=None):
                 del path[-1]
             else:
                 tail.insert(0, pdir)
-                return os.path.join(*tail)
+                return join(*tail)
         else:
             # Oops, got all the way through 'path' without finding a
             # match in package_dir.  If package_dir defines a directory
@@ -70,7 +66,7 @@ def get_package_dir(self, package, package_dir=None):
                 tail.insert(0, pdir)
 
             if tail:
-                return os.path.join(*tail)
+                return join(*tail)
             else:
                 return ''
 
@@ -85,7 +81,7 @@ def get_package_data(packages, exclude=('.py', '.pyc'), package_dir=None):
         List of file extensions to exclude
     package_dir : mapping of str -> str
         Same as `package_dir` argument to `setup()`
-    
+
     Returns
     -------
     mapping of str -> list of str
@@ -122,8 +118,8 @@ def get_data_files(prefix, bin_path="bin", include_path="include"):
         `data_files` argument to `setup()`
     """
     dir_filter = lambda path: isfile(path)
-    bin_files = filter(dir_filter, iglob(f"{prefix}/{bin_dir}/**/*", recursive=True))
-    include_files = filter(dir_filter, iglob(f"{prefix}/{include_dir}/**/*", recursive=True))
+    bin_files = filter(dir_filter, iglob(f"{prefix}/{bin_path}/**/*", recursive=True))
+    include_files = filter(dir_filter, iglob(f"{prefix}/{include_path}/**/*", recursive=True))
 
     data_files = defaultdict(list)
     for filename in chain.from_iterable([bin_files, include_files]):

@@ -1,6 +1,5 @@
 import subprocess
 import os
-from setuptools import setup
 import sys
 
 
@@ -54,7 +53,7 @@ def build_vtk(src="../../src/vtk",
         python_include_dir = f"{sys.prefix}/include"
         python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
         # only support VS2017 build tools for now
-        vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"
+        vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
         build_cmd.append(vcvarsall_cmd)
     elif is_darwin:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
