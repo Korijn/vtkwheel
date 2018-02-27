@@ -122,6 +122,7 @@ def build_vtk(src="../../src/vtk",
         cmake_cmd.extend([
             "-DCMAKE_INSTALL_NAME_DIR:STRING=@loader_path",
             "-DCMAKE_INSTALL_RPATH:STRING=@loader_path",
+            "-DCMAKE_OSX_DEPLOYMENT_TARGET='10.13'",
         ])
     elif not is_win:
         cmake_cmd.extend([
