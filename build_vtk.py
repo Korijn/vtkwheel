@@ -40,9 +40,22 @@ def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
         print(f"> overwriting ninja succeeded")
 
 
+def generate_libpython(filepath="work/vtk/libpython.notreally"):
+    """
+    According to PEP513 you are not allowed to link against libpythonxxx.so. However, CMake demands it. So here you go.
+    An empty libpythonxxx.so.
+    """
+    if not os.path.exists(filepath):
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, mode='w') as fh:
+            fh.write('')
+    return filepath
+
+
 def build_vtk(src="../../src/vtk",
               work="work/vtk",
               build="../../build_vtk",
+              python_library="work/vtk/libpython.notreally",
               generator="Ninja",
               install_cmd="ninja install",
               install_dev=True,
@@ -51,18 +64,15 @@ def build_vtk(src="../../src/vtk",
     build_cmd = []
     if is_win:
         python_include_dir = f"{sys.prefix}/include"
-        python_library = f"{sys.prefix}/Scripts/python{sys.version_info[0]}{sys.version_info[1]}.dll"
         # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
         build_cmd.append(vcvarsall_cmd)
     elif is_darwin:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        python_library = f"{sys.prefix}/lib/libpython{sys.version_info[0]}.{sys.version_info[1]}.dylib"
     else:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        python_library = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so"
 
     # being helpful
     validation_errors = []
@@ -134,5 +144,6 @@ if __name__ == "__main__":
         # could not get it to work with the version of ninja that is on pypi, so put it on the current path
         download_install_ninja_win()
 
+    generate_libpython()
     clone_vtk()
     build_vtk()

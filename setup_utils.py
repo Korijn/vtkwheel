@@ -3,6 +3,7 @@ from collections import defaultdict
 from os.path import isfile, relpath, dirname, splitext, join
 from setuptools.dist import Distribution
 from glob import iglob
+import inspect
 
 
 class BinaryDistribution(Distribution):
