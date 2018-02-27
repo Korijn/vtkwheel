@@ -13,5 +13,5 @@ To run on your own system, run the following:
 pipenv install --dev
 pipenv run python build_vtk.py
 pipenv run python setup.py bdist_wheel
-auditwheel repair ./dist/VTK* -w ./dist/repaired
+pipenv run auditwheel repair ./dist/VTK* -w ./dist/repaired
 ```
