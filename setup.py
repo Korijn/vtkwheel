@@ -17,6 +17,6 @@ setup(
     package_data=get_package_data(packages, package_dir=package_dir),
     packages=packages,
     include_package_data=True,
-    data_files=get_data_files(root_package_dir),
+    data_files=get_data_files(root_package_dir, ["bin", "include", "lib"]),
     distclass=BinaryDistribution,
 )

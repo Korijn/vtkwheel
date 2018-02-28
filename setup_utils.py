@@ -114,16 +114,14 @@ def get_package_data(packages, exclude=('.py', '.pyc'), package_dir=None):
     return package_data
 
 
-def get_data_files(prefix, bin_path="bin", include_path="include"):
+def get_data_files(prefix, paths):
     """
     Parameters
     ----------
     prefix : str
         All other parameters and returned values are relative to this path prefix
-    bin_path : str
-        Path relative to `prefix` containing binaries
-    include_path : str
-        Path relative to `prefix` containing headers
+    paths : list of str
+        Paths relative to `prefix` containing data files
 
     Returns
     -------
@@ -131,11 +129,9 @@ def get_data_files(prefix, bin_path="bin", include_path="include"):
         `data_files` argument to `setup()`
     """
     dir_filter = lambda path: isfile(path)
-    bin_files = filter(dir_filter, iglob(f"{prefix}/{bin_path}/**/*", recursive=True))
-    include_files = filter(dir_filter, iglob(f"{prefix}/{include_path}/**/*", recursive=True))
-
+    files = chain.from_iterable([filter(dir_filter, iglob(f"{prefix}/{path}/**/*", recursive=True)) for path in paths])
     data_files = defaultdict(list)
-    for filename in chain.from_iterable([bin_files, include_files]):
+    for filename in files:
         target_dir = relpath(dirname(filename), prefix)
         data_files[target_dir].append(filename)
 

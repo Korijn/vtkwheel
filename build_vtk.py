@@ -62,17 +62,13 @@ def build_vtk(src="../../src/vtk",
               clean_cmake_cache=True):
     """Build and install VTK using CMake."""
     build_cmd = []
+    version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+    python_include_dir = f"{sys.prefix}/include/python{version_string}"
     if is_win:
         python_include_dir = f"{sys.prefix}/include"
         # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
         build_cmd.append(vcvarsall_cmd)
-    elif is_darwin:
-        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_include_dir = f"{sys.prefix}/include/python{version_string}"
-    else:
-        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_include_dir = f"{sys.prefix}/include/python{version_string}"
 
     # being helpful
     validation_errors = []
@@ -87,17 +83,18 @@ def build_vtk(src="../../src/vtk",
     cmake_cmd = ["cmake"]
     if clean_cmake_cache and os.path.exists(work):
         cmake_cmd.append("-U *")
+    site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages/vtk"
     cmake_cmd.extend([
         src,
         f"-G \"{generator}\"",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",  # VTK will automatically create a subdir "vtk"
-        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./vtk",  # so that's where we'll install our .so files
-        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./vtk",
-        f"-DVTK_INSTALL_RUNTIME_DIR:PATH=./bin",
-        f"-DVTK_INSTALL_INCLUDE_DIR:PATH=./include",
+        #f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",  # VTK will automatically create a subdir "vtk"
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./{site_packages_dir}",  # so that's where we'll install our .so files
+        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./{site_packages_dir}",
+        #f"-DVTK_INSTALL_RUNTIME_DIR:PATH=./bin",
+        #f"-DVTK_INSTALL_INCLUDE_DIR:PATH=./include",
         f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
         # BUILD options
         "-DVTK_LEGACY_REMOVE:BOOL=ON",
@@ -120,7 +117,7 @@ def build_vtk(src="../../src/vtk",
     # https://cmake.org/Wiki/CMake_RPATH_handling
     if is_darwin:
         cmake_cmd.extend([
-            "-DCMAKE_INSTALL_NAME_DIR:STRING=@loader_path",
+            "-DCMAKE_INSTALL_NAME_DIR:STRING=@rpath",
             "-DCMAKE_INSTALL_RPATH:STRING=@loader_path",
             "-DCMAKE_OSX_DEPLOYMENT_TARGET='10.13'",
         ])
