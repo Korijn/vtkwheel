@@ -2,10 +2,13 @@ from setup_utils import BinaryDistribution, get_data_files, get_package_data
 
 from setuptools import setup, find_packages
 
+import sys
 
-root_package_dir = 'build_vtk'
-package_dir = {'': root_package_dir}
-packages = find_packages(root_package_dir)
+
+build_dir = 'build_vtk'
+site_packages_dir = f"{build_dir}/lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
+package_dir = {'': site_packages_dir}
+packages = find_packages(site_packages_dir)
 
 setup(
     name='VTK',
@@ -17,6 +20,6 @@ setup(
     package_data=get_package_data(packages, package_dir=package_dir),
     packages=packages,
     include_package_data=True,
-    data_files=get_data_files(root_package_dir, ["bin", "include", "lib"]),
+    data_files=get_data_files(build_dir, ["bin", "include", "lib/cmake"]),
     distclass=BinaryDistribution,
 )

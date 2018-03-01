@@ -90,11 +90,8 @@ def build_vtk(src="../../src/vtk",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        #f"-DVTK_INSTALL_PYTHON_MODULE_DIR:STRING=.",  # VTK will automatically create a subdir "vtk"
-        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./{site_packages_dir}",  # so that's where we'll install our .so files
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./{site_packages_dir}",  # install .so files into the python package
         f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./{site_packages_dir}",
-        #f"-DVTK_INSTALL_RUNTIME_DIR:PATH=./bin",
-        #f"-DVTK_INSTALL_INCLUDE_DIR:PATH=./include",
         f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
         # BUILD options
         "-DVTK_LEGACY_REMOVE:BOOL=ON",
@@ -135,6 +132,8 @@ def build_vtk(src="../../src/vtk",
 
     os.makedirs(work, exist_ok=True)
     subprocess.check_call(build_cmd, shell=True, cwd=work)
+
+    
 
 
 if __name__ == "__main__":
