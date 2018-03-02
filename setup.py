@@ -4,11 +4,21 @@ from setuptools import setup, find_packages
 
 import sys
 
+is_win = (sys.platform == 'win32')
+
 
 build_dir = 'build_vtk'
-site_packages_dir = f"{build_dir}/lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
+
+if is_win:
+    data_dirs = ["Scripts", "include", "lib/cmake"]
+    site_packages_dir = f"{build_dir}/Lib/site-packages"
+else:
+    data_dirs = ["bin", "include", "lib/cmake"]
+    site_packages_dir = f"{build_dir}/lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
+
 package_dir = {'': site_packages_dir}
 packages = find_packages(site_packages_dir)
+
 
 setup(
     name='VTK',

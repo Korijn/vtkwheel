@@ -82,14 +82,14 @@ def build_vtk(src="../../src/vtk",
     build_cmd = []
     if is_win:
         python_include_dir = f"{sys.prefix}/include"
-        site_packages_dir = "Lib/site-packages/vtk"
+        site_packages_dir = f"Lib/site-packages"
         # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
         build_cmd.append(vcvarsall_cmd)
     else:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
         python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages/vtk"
+        site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
 
     # being helpful
     validation_errors = []
@@ -113,8 +113,9 @@ def build_vtk(src="../../src/vtk",
         "-DCMAKE_BUILD_TYPE=Release",
         # INSTALL options
         f"-DCMAKE_INSTALL_PREFIX:PATH={build}",
-        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./{site_packages_dir}",  # install .so files into the python package
-        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./{site_packages_dir}",
+        f"-DVTK_INSTALL_PYTHON_MODULE_DIR:PATH=./{site_packages_dir}",
+        f"-DVTK_INSTALL_LIBRARY_DIR:PATH=./{site_packages_dir}/vtk",  # install .so files into the python package
+        f"-DVTK_INSTALL_ARCHIVE_DIR:PATH=./{site_packages_dir}/vtk",
         f"-DVTK_INSTALL_NO_DEVELOPMENT:BOOL={'ON' if not install_dev else 'OFF'}",
         # BUILD options
         "-DVTK_LEGACY_REMOVE:BOOL=ON",
@@ -144,6 +145,10 @@ def build_vtk(src="../../src/vtk",
     elif not is_win:
         cmake_cmd.extend([
             "-DCMAKE_INSTALL_RPATH:STRING=\$ORIGIN",
+        ])
+    elif is_win:
+        cmake_cmd.extend([
+            "-DVTK_INSTALL_RUNTIME_DIR:PATH=./Scripts",
         ])
 
     build_cmd.append(" ".join(cmake_cmd))
