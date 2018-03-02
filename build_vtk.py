@@ -46,19 +46,15 @@ def download_install_cmake_win(major_version="3.10", version="3.10.2", zip_file=
         print(f"> downloading cmake v{version}")
         from urllib.request import urlretrieve
         url = f"https://cmake.org/files/v{major_version}/cmake-{version}-win64-x64.zip"
+        print(url)
         urlretrieve(url, zip_file)
 
-    current = subprocess.check_output("cmake --version", shell=True).decode().strip()
-    if version != current:
-        print(f"> overwriting cmake (v{current}) with v{version}")
+        print(f"> overwriting cmake with v{version}")
         scripts_dir = os.path.join(sys.prefix, "Lib", "site-packages", "cmake", "data")
         import zipfile
         with zipfile.ZipFile(zip_file, 'r') as zh:
             zh.extractall(scripts_dir)
 
-        current = subprocess.check_output("cmake --version", shell=True).decode().strip()
-        if version != current:
-            exit(f"> overwriting cmake FAILED")
         print(f"> overwriting cmake succeeded")
 
 
