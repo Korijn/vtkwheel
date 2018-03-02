@@ -18,7 +18,8 @@ else:
 
 package_dir = {'': site_packages_dir}
 packages = find_packages(site_packages_dir)
-
+package_data = get_package_data(packages, package_dir=package_dir)
+data_files = get_data_files(build_dir, data_dirs)
 
 setup(
     name='VTK',
@@ -27,9 +28,9 @@ setup(
     author='VTK Community',
     url='https://www.vtk.org',
     package_dir=package_dir,
-    package_data=get_package_data(packages, package_dir=package_dir),
+    package_data=package_data,
     packages=packages,
     include_package_data=True,
-    data_files=get_data_files(build_dir, ["bin", "include", "lib/cmake"]),
+    data_files=data_files,
     distclass=BinaryDistribution,
 )
