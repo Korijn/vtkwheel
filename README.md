@@ -25,3 +25,5 @@ pipenv run delocate-wheel -v -w ./dist/repaired ./dist/VTK*
 If you're building on Windows, make sure to run from a vanilla CPython 3.6 install and have the VS2017 build tools installed.
 
 Note that the build_vtk.py script will overwrite ninja.exe and cmake.exe in your virtualenv, since the version on pypi are not compatible.
+
+Also, I think there is no auditwheel-like tool for Windows. But then again, it is also less important on Windows.
