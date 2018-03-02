@@ -40,6 +40,28 @@ def download_install_ninja_win(version="1.8.2", zip_file="src/ninja.zip"):
         print(f"> overwriting ninja succeeded")
 
 
+def download_install_cmake_win(major_version="3.10", version="3.10.2", zip_file="src/cmake.zip"):
+    os.makedirs(os.path.dirname(zip_file), exist_ok=True)
+    if not os.path.isfile(zip_file):
+        print(f"> downloading cmake v{version}")
+        from urllib.request import urlretrieve
+        url = f"https://cmake.org/files/v{major_version}/cmake-{version}-win64-x64.zip"
+        urlretrieve(url, zip_file)
+
+    current = subprocess.check_output("cmake --version", shell=True).decode().strip()
+    if version != current:
+        print(f"> overwriting cmake (v{current}) with v{version}")
+        scripts_dir = os.path.join(sys.prefix, "Lib", "site-packages", "cmake", "data")
+        import zipfile
+        with zipfile.ZipFile(zip_file, 'r') as zh:
+            zh.extractall(scripts_dir)
+
+        current = subprocess.check_output("cmake --version", shell=True).decode().strip()
+        if version != current:
+            exit(f"> overwriting cmake FAILED")
+        print(f"> overwriting cmake succeeded")
+
+
 def generate_libpython(filepath="work/vtk/libpython.notreally"):
     """
     According to PEP513 you are not allowed to link against libpythonxxx.so. However, CMake demands it. So here you go.
@@ -62,13 +84,16 @@ def build_vtk(src="../../src/vtk",
               clean_cmake_cache=True):
     """Build and install VTK using CMake."""
     build_cmd = []
-    version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-    python_include_dir = f"{sys.prefix}/include/python{version_string}"
     if is_win:
         python_include_dir = f"{sys.prefix}/include"
+        site_packages_dir = "Lib/site-packages/vtk"
         # only support VS2017 build tools for now
         vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
         build_cmd.append(vcvarsall_cmd)
+    else:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_include_dir = f"{sys.prefix}/include/python{version_string}"
+        site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages/vtk"
 
     # being helpful
     validation_errors = []
@@ -82,8 +107,10 @@ def build_vtk(src="../../src/vtk",
     # compose cmake command
     cmake_cmd = ["cmake"]
     if clean_cmake_cache and os.path.exists(work):
-        cmake_cmd.append("-U *")
-    site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages/vtk"
+        if is_win:
+            cmake_cmd.append('"-U *"')
+        else:
+            cmake_cmd.append("-U *")
     cmake_cmd.extend([
         src,
         f"-G \"{generator}\"",
@@ -134,13 +161,19 @@ def build_vtk(src="../../src/vtk",
     subprocess.check_call(build_cmd, shell=True, cwd=work)
 
     
-
-
 if __name__ == "__main__":
     if is_win:
-        # could not get it to work with the version of ninja that is on pypi, so put it on the current path
+        # windows requires the absolute latest of ninja and cmake to support VS2017 build tools
         download_install_ninja_win()
+        download_install_cmake_win()
 
-    generate_libpython()
     clone_vtk()
-    build_vtk()
+
+    if not is_win:
+        generate_libpython()
+        build_vtk()
+
+    else:
+        version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
+        win_python_lib = f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
+        build_vtk(python_library=os.path.expandvars(win_python_lib))
