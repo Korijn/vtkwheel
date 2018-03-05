@@ -4,6 +4,7 @@ from os.path import isfile, relpath, dirname, splitext, join
 from setuptools.dist import Distribution
 from glob import iglob
 import inspect
+import sys
 
 
 class BinaryDistribution(Distribution):
@@ -136,3 +137,21 @@ def get_data_files(prefix, paths):
         data_files[target_dir].append(filename)
 
     return list(data_files.items())
+
+
+def get_python_lib():
+    """
+    According to PEP513 you are not allowed to link against libpythonxxx.so. However, CMake demands it. So here you go.
+    An empty libpythonxxx.so.
+    On Windows, linking to an empty file is not allowed, so instead the path to the actual lib is returned.
+    """
+    is sys.platform == 'win32':
+        version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
+        return f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
+
+    filepath = "work/vtk/libpython.notreally"):
+    if not os.path.exists(filepath):
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, mode='w') as fh:
+            fh.write('')
+    return filepath

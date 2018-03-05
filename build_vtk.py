@@ -161,7 +161,7 @@ def build_vtk(src="../../src/vtk",
     os.makedirs(work, exist_ok=True)
     subprocess.check_call(build_cmd, shell=True, cwd=work)
 
-    
+
 if __name__ == "__main__":
     if is_win:
         # windows requires the absolute latest of ninja and cmake to support VS2017 build tools
@@ -170,11 +170,6 @@ if __name__ == "__main__":
 
     clone_vtk()
 
-    if not is_win:
-        generate_libpython()
-        build_vtk()
+    python_lib = setup_utils.get_python_lib()
 
-    else:
-        version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
-        win_python_lib = f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
-        build_vtk(python_library=os.path.expandvars(win_python_lib))
+    build_vtk(python_library=os.path.expandvars(python_lib))
