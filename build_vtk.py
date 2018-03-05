@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import setup_utils
 
 
 is_win = (sys.platform == 'win32')
@@ -71,9 +72,6 @@ def generate_libpython(filepath="work/vtk/libpython.notreally"):
 
 
 def build_vtk(src="../../src/vtk",
-              python_library=None,
-              python_include_dir=None,
-              site_packages_dir=None,
               work="work/vtk",
               build="../../build_vtk",
               generator="Ninja",
@@ -81,6 +79,10 @@ def build_vtk(src="../../src/vtk",
               install_dev=True,
               clean_cmake_cache=True):
     """Build and install VTK using CMake."""
+    python_library = setup_utils.get_python_lib(root=work)
+    python_include_dir = setup_utils.get_python_include_dir()
+    site_packages_dir = os.path.relpath(setup_utils.get_site_packages_dir(), sys.prefix)
+
     build_cmd = []
     if is_win:
         # only support VS2017 build tools for now
@@ -156,11 +158,4 @@ if __name__ == "__main__":
         download_install_cmake_win()
 
     clone_vtk()
-
-    python_lib = setup_utils.get_python_lib()
-    python_include_dir = setup_utils.get_python_include_dir()
-    site_packages_dir = os.path.relpath(setup_utils.get_site_packages_dir(), sys.prefix)
-
-    build_vtk(python_library=python_lib,
-              python_include_dir=python_include_dir,
-              site_packages_dir=site_packages_dir)
+    build_vtk()
