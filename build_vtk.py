@@ -1,6 +1,7 @@
 import subprocess
 import os
 import sys
+import setup_utils
 
 
 is_win = (sys.platform == 'win32')
@@ -73,32 +74,20 @@ def generate_libpython(filepath="work/vtk/libpython.notreally"):
 def build_vtk(src="../../src/vtk",
               work="work/vtk",
               build="../../build_vtk",
-              python_library="work/vtk/libpython.notreally",
               generator="Ninja",
               install_cmd="ninja install",
               install_dev=True,
               clean_cmake_cache=True):
     """Build and install VTK using CMake."""
+    python_library = setup_utils.get_python_lib(root=work)
+    python_include_dir = setup_utils.get_python_include_dir()
+    site_packages_dir = os.path.relpath(setup_utils.get_site_packages_dir(), sys.prefix)
+
     build_cmd = []
     if is_win:
-        python_include_dir = f"{sys.prefix}/include"
-        site_packages_dir = f"Lib/site-packages"
         # only support VS2017 build tools for now
-        vcvarsall_cmd = "\"C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat\" amd64"  # noqa
+        vcvarsall_cmd = f"\"{setup_utils.get_vcvarsall()}\" amd64"
         build_cmd.append(vcvarsall_cmd)
-    else:
-        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
-        python_include_dir = f"{sys.prefix}/include/python{version_string}"
-        site_packages_dir = f"lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
-
-    # being helpful
-    validation_errors = []
-    if not os.path.exists(python_library):
-        validation_errors.append(f"!! python_library does not exist at: '{python_library}'")
-    if not os.path.exists(python_include_dir):
-        validation_errors.append(f"!! python_include_dir does not exist at: '{python_include_dir}'")
-    if validation_errors:
-        raise ValueError("\n".join(validation_errors))
 
     # compose cmake command
     cmake_cmd = ["cmake"]
@@ -161,7 +150,7 @@ def build_vtk(src="../../src/vtk",
     os.makedirs(work, exist_ok=True)
     subprocess.check_call(build_cmd, shell=True, cwd=work)
 
-    
+
 if __name__ == "__main__":
     if is_win:
         # windows requires the absolute latest of ninja and cmake to support VS2017 build tools
@@ -169,12 +158,4 @@ if __name__ == "__main__":
         download_install_cmake_win()
 
     clone_vtk()
-
-    if not is_win:
-        generate_libpython()
-        build_vtk()
-
-    else:
-        version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
-        win_python_lib = f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
-        build_vtk(python_library=os.path.expandvars(win_python_lib))
+    build_vtk()
