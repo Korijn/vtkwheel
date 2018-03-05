@@ -147,11 +147,43 @@ def get_python_lib():
     """
     is sys.platform == 'win32':
         version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
-        return f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
+        python_lib = os.path.expandvars(f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib")
+        assert os.path.exists(python_lib)
+        return python_lib
 
-    filepath = "work/vtk/libpython.notreally"):
+    filepath = "libpython.notreally"):
     if not os.path.exists(filepath):
         os.makedirs(os.path.dirname(filepath), exist_ok=True)
         with open(filepath, mode='w') as fh:
             fh.write('')
     return filepath
+
+
+def get_python_include_dir():
+    if sys.platform == 'win32':
+        include_dir = f"{sys.prefix}\\include"
+    else:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        include_dir = f"{sys.prefix}/include/python{version_string}"
+
+    assert os.path.exists(include_dir)
+    return include_dir
+
+
+def get_site_packages_dir():
+    """
+    Returns absolute path to site packages dir.
+    """
+    if sys.platform == 'win32':
+        site_packages = f"{sys.prefix}\\Lib\\site-packages"
+    else:
+        site_packages = f"{sys.prefix}/lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
+
+    assert os.path.exists(site_packages)
+    return site_packages
+
+
+def get_vcvarsall():
+    path = os.path.expandvars("%PROGRAMFILES(x86)%\\Microsoft Visual Studio\\2017\\BuildTools\\VC\\Auxiliary\\Build\\vcvarsall.bat")
+    assert os.path.exists(path)
+    return path
