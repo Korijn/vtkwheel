@@ -8,6 +8,10 @@ import os
 import sys
 
 
+is_win = (sys.platform == 'win32')
+is_darwin = (sys.platform == 'darwin')
+
+
 class BinaryDistribution(Distribution):
     """
     Specialized setuptools `Distribution` class that forces a platform-specific package build.
@@ -140,32 +144,27 @@ def get_data_files(prefix, paths):
     return list(data_files.items())
 
 
-def get_python_lib(root='.'):
+def get_python_lib():
     """
-    Generates an file in the given root dir as a dummy python lib (only on Unix) and returns the path.
-
-    According to PEP513 you are not allowed to link against libpythonxxx.so. However, CMake demands it. So here you go.
-    An empty libpythonxxx.so.
-    On Windows, linking to an empty file is not allowed, so instead the path to the actual lib is returned.
+    Returns absolute path to libpythonX.YZ.so on linux, libpythonX.Y.dylib on macOS or pythonXY.lib on windows.
     """
-    if sys.platform == 'win32':
+    if is_win:
         version_string = f"{sys.version_info[0]}{sys.version_info[1]}"
         python_lib = expandvars(
             f"%LOCALAPPDATA%\\Programs\\Python\\Python{version_string}\\libs\\python{version_string}.lib"
         )
-        assert exists(python_lib)
-        return python_lib
-
-    filepath = f"{root}/libpython.notreally"
-    if not exists(filepath):
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
-        with open(filepath, mode='w') as fh:
-            fh.write('')
-    return filepath
+    elif is_darwin:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}"
+        python_lib = f"{sys.prefix}/lib/x86_64-linux-gnu/libpython{version_string}.dylib"
+    else:
+        version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
+        python_lib = f"/usr/lib/x86_64-linux-gnu/libpython{version_string}.so.1.0"
+    assert exists(python_lib)
+    return python_lib
 
 
 def get_python_include_dir():
-    if sys.platform == 'win32':
+    if is_win:
         include_dir = f"{sys.prefix}\\include"
     else:
         version_string = f"{sys.version_info[0]}.{sys.version_info[1]}{sys.abiflags}"
@@ -179,7 +178,7 @@ def get_site_packages_dir():
     """
     Returns absolute path to site packages dir.
     """
-    if sys.platform == 'win32':
+    if is_win:
         site_packages = f"{sys.prefix}\\Lib\\site-packages"
     else:
         site_packages = f"{sys.prefix}/lib/python{sys.version_info[0]}.{sys.version_info[1]}/site-packages"
