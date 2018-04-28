@@ -1,18 +1,14 @@
-FROM quay.io/pypa/manylinux1_x86_64
+FROM quay.io/pypa/manylinux1_x86_64 as build
 
-WORKDIR /io
-VOLUME /io/dist
-
+WORKDIR /tmp
 ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
+RUN yum -y install xz
+RUN pip install cmake ninja
 
 # LLVM
-RUN yum -y install xz
 RUN wget -qO- http://releases.llvm.org/6.0.0/llvm-6.0.0.src.tar.xz | unxz -c - | tar x
-
-RUN pip install cmake ninja
 RUN cd llvm-6.0.0.src && mkdir build && cd build \
     && cmake .. -GNinja \
-        -DCMAKE_INSTALL_PREFIX:PATH=/io/build_vtk \
         -DCMAKE_BUILD_TYPE=Release \
         -DLLVM_BUILD_LLVM_DYLIB=ON \
         -DLLVM_ENABLE_RTTI=ON \
@@ -21,10 +17,9 @@ RUN cd llvm-6.0.0.src && mkdir build && cd build \
     && ninja install
 
 # osmesa
-RUN wget -qO- https://mesa.freedesktop.org/archive/mesa-18.0.1.tar.xz | tar xz
+RUN wget -qO- https://mesa.freedesktop.org/archive/mesa-18.0.2.tar.gz | tar xz
 RUN cd mesa-18.0.1 \
     && ./configure \
-        --prefix=/io/build_vtk \
         --disable-xvmc \
         --disable-glx \
         --disable-dri \
@@ -38,10 +33,18 @@ RUN cd mesa-18.0.1 \
         --enable-llvm \
     && make -j4 && make install
 
+FROM quay.io/pypa/manylinux1_x86_64
+
+WORKDIR /io
+
+ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
+
 # Python deps
 RUN pip install pipenv --upgrade
 COPY ./Pipfile .
 RUN pipenv install --dev --system --skip-lock
+
+# TODO: copy built osmesa and llvm from build stage
 
 # Build VTK
 COPY ./build_vtk.py .
