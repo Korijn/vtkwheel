@@ -2,6 +2,7 @@ from setup_utils import BinaryDistribution, get_data_files, get_package_data
 
 from setuptools import setup, find_packages
 
+from os import environ as env
 import sys
 
 is_win = (sys.platform == 'win32')
@@ -21,8 +22,12 @@ packages = find_packages(site_packages_dir)
 package_data = get_package_data(packages, package_dir=package_dir)
 data_files = get_data_files(build_dir, data_dirs)
 
+postfix = ""
+if env['HAS_OSMESA'] == "1":
+    postfix = "-osmesa"
+
 setup(
-    name='VTK',
+    name=f"VTK{postfix}",
     version='8.1.0',
     description='VTK is an open-source toolkit for 3D computer graphics, image processing, and visualization',
     author='VTK Community',

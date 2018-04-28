@@ -25,7 +25,8 @@ def build_vtk(src="../../src/vtk",
               generator="Ninja",
               install_cmd="ninja install",
               install_dev=True,
-              clean_cmake_cache=True):
+              clean_cmake_cache=True,
+              has_osmesa=False):
     """Build and install VTK using CMake."""
     if not is_win:
         # on linux/macOS, generate an empty libpython file to link against for PEP513 compliance
@@ -93,6 +94,10 @@ def build_vtk(src="../../src/vtk",
         cmake_cmd.extend([
             "-DVTK_INSTALL_RUNTIME_DIR:PATH=./Scripts",
         ])
+    if has_osmesa:
+        cmake_cmd.extend([
+            "-DVTK_OPENGL_HAS_OSMESA:BOOL=ON",
+        ])
 
     build_cmd.append(" ".join(cmake_cmd))
     build_cmd.append(install_cmd)
@@ -152,5 +157,9 @@ if __name__ == "__main__":
         download_install_ninja_win()
         download_install_cmake_win()
 
+    opts = {}
+    if "--osmesa" in sys.argv:
+        opts['has_osmesa'] = True
+
     clone_vtk()
-    build_vtk()
+    build_vtk(**opts)
