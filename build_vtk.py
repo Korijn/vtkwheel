@@ -29,6 +29,7 @@ def build_vtk(src="../../src/vtk",
     """Build and install VTK using CMake."""
     if not is_win:
         # on linux/macOS, generate an empty libpython file to link against for PEP513 compliance
+        os.makedirs(work, exist_ok=True)
         subprocess.check_call(f"touch {work}/libpython.fake", shell=True)
         python_library = os.path.abspath(os.path.join(work, "libpython.fake"))
     else:
