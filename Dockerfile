@@ -5,7 +5,7 @@ WORKDIR /io
 VOLUME /io/dist
 
 ENV PATH=/opt/python/cp36-cp36m/bin:$PATH
-RUN pip install pipenv --upgrade
+RUN pip install pip pipenv setuptools wheel --upgrade
 
 COPY ./Pipfile .
 RUN pipenv install --dev --system --skip-lock
