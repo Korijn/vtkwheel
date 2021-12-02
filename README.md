@@ -1,3 +1,5 @@
+**NOTICE**: VTK nowadays publish their own wheels on pypi. Therefore this repo is archived.
+
 # Instructions
 
 To make a wheel for Linux, I recommend using docker:
